@@ -37,7 +37,6 @@ This project is a simple 3D "engine" written in C for the [Blackbox](https://bla
 
 ## To-Do
 
-- **Remove pointers**
 - **Implement controls**
 - **Potentially add sound**
 

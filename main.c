@@ -6,12 +6,12 @@
 //  Semi-port of my Pygame 3D projection project to C
 //
 
-//#include "blackbox.h"
+#include "blackbox.h"
 
 #define BLACKBOX_TIMEOUT_1 1
 #define BLACKBOX_TIMEOUT_2 125
 
-//BlackBox* blackbox;
+BlackBox* blackbox;
 
 // These functions are called when the buttons are pressed
 void on_up() {}
@@ -56,15 +56,15 @@ float R20 = 0;
 float R21 = 0;
 float R22 = 1;
 
-int project(float p0, float p1, float p2, float* xFinal, float* yFinal);
+int project(float p0, float p1, float p2);
 
 void setCamera(float xNew, float yNew, float zNew);
 void moveCamera(float m0, float m1, float m2);
 void rotateCamera(float deltaAngleDegrees, float a0, float a1, float a2);
 void updateR(); // void updateR(void); doesn't work
 
-void multiplyQuat(float* q10, float* q11, float* q12, float* q13, float q20, float q21, float q22, float q23);
-void normalizeQuat(float* q0, float* q1, float* q2, float* q3);
+void multiplyRWithQuat(float q20, float q21, float q22, float q23);
+void normalizeR();
 
 float sine(float deg);
 float cosine(float deg);
@@ -73,11 +73,11 @@ int fact(int n);
 float sqroot(float square);
 float min(float i, float j);
 
+float xProjected; // float xProjected, yProjected; does not work
+float yProjected;
+
 void main() {
   while (1) {
-    float xPos; // float xPos, yPos; does not work
-    float yPos;
-
     // Point to project
     //float point[3] = {0, 2, 2};
     float p0 = 0;
@@ -86,17 +86,17 @@ void main() {
 
     // Project point
     //project(R, R_inv, point, &xPos, &yPos);
-    project(p0, p1, p2, &xPos, &yPos);
+    project(p0, p1, p2);
 
     //updateR(); // Update rotation matrix after movement
 
-    //blackbox->matrix.pixel(xPos, yPos)->turn_on();
+    blackbox->matrix.pixel(xProjected, yProjected)->turn_on();
   }
 }
 
 // PROJECTION //
 
-int project(float p0, float p1, float p2, float* xFinal, float* yFinal) {
+int project(float p0, float p1, float p2) {
     float P1x = p0 - x;
     float P1y = p1 - y;
     float P1z = p2 - z;
@@ -106,8 +106,8 @@ int project(float p0, float p1, float p2, float* xFinal, float* yFinal) {
     float P2z = (R02 * P1x) + (R12 * P1y) + (R22 * P1z);
 
     if (P2z > 0) {
-        (*xFinal) = FOCAL_LENGTH * P2x / P2z;
-        (*yFinal) = FOCAL_LENGTH * P2y / P2z;
+        xProjected = FOCAL_LENGTH * P2x / P2z;
+        yProjected = FOCAL_LENGTH * P2y / P2z;
         return 1;
     }
     return 0;
@@ -134,8 +134,8 @@ void rotateCamera(float deltaAngleDegrees, float a0, float a1, float a2) {
     float deltaQ2 = a1 * sine(deltaAngle);
     float deltaQ3 = a2 * sine(deltaAngle);
 
-    multiplyQuat(&quat0, &quat1, &quat2, &quat3, deltaQ0, deltaQ1, deltaQ2, deltaQ3);
-    normalizeQuat(&quat0, &quat1, &quat2, &quat3);
+    multiplyRWithQuat(deltaQ0, deltaQ1, deltaQ2, deltaQ3);
+    normalizeR();
 }
 
 void updateR() {
@@ -159,35 +159,35 @@ void updateR() {
 
 // MATRICES AND QUATERNIONS //
 
-void multiplyQuat(float* q10, float* q11, float* q12, float* q13, float q20, float q21, float q22, float q23) { // Stores result in first quaternion
-    float w1 = (*q10);
-    float x1 = (*q11);
-    float y1 = (*q12);
-    float z1 = (*q13);
+void multiplyRWithQuat(float q20, float q21, float q22, float q23) { // Stores result in first quaternion
+    float w1 = quat0; // For better readability
+    float x1 = quat1;
+    float y1 = quat2;
+    float z1 = quat3;
 
     float w2 = q20;
     float x2 = q21;
     float y2 = q22;
     float z2 = q23;
 
-    (*q10) = w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2;
-    (*q11) = w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2;
-    (*q12) = w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2;
-    (*q13) = w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2;
+    quat0 = w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2;
+    quat1 = w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2;
+    quat2 = w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2;
+    quat3 = w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2;
 }
 
-void normalizeQuat(float* q0, float* q1, float* q2, float* q3) {
-    float w1 = (*q0); // For easier readability
-    float x1 = (*q1);
-    float y1 = (*q2);
-    float z1 = (*q3);
+void normalizeR() {
+    float w1 = quat0; // For better readability
+    float x1 = quat1;
+    float y1 = quat2;
+    float z1 = quat3;
 
     float length = sqroot(w1 * w1 + x1 * x1 + y1 * y1 + z1 * z1);
 
-    (*q0) = w1 / length;
-    (*q1) = x1 / length;
-    (*q2) = y1 / length;
-    (*q3) = z1 / length;
+    quat0 = w1 / length;
+    quat1 = x1 / length;
+    quat2 = y1 / length;
+    quat3 = z1 / length;
 }
 
 // MATH //
