@@ -17,6 +17,7 @@ This project is a simple 3D "engine" written in C for the [Blackbox](https://bla
 - **No pointers**: There are issues with * and & in the Blackbox editor, so no pointer were used
 - **No arrays**: Arrays currently do not work in the Blackbox editor, everything is array free
 - **No structs**: Structs do not work at the moment in the Blackbox editor, everything is struct free
+- **No preprocessor directives**: At the moment user made preprocessor directives do not work, I used constants instead
 - **Others**: Some other convenience features of the C language are also not supported
 
 ## How to Run

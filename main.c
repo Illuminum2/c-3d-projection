@@ -27,12 +27,12 @@ void on_timeout_2() {}
 #define BLACKBOX_TIMEOUT_1 1
 #define BLACKBOX_TIMEOUT_2 125
 
-#define FOCAL_LENGTH 289//10
-#define SPEED 0.1
+const int FOCAL_LENGTH = 10;
+const float SPEED = 0.1;
 
-#define PI 3.1415926535
-#define TERMS 7
-#define SQROOT_ITER 32 // Could probably be lower
+const float PI = 3.1415926535;
+const int TERMS = 7;
+const int SQROOT_ITER = 32; // Could probably be lower
 
 float x = 0.0;
 float y = 0.0;
