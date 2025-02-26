@@ -6,26 +6,17 @@
 //  Semi-port of my Pygame 3D projection project to C
 //
 
-#include "blackbox.h"
+#include <stdio.h> // TEMP
+
+//#include "blackbox.h" // TEMP
 
 #define BLACKBOX_TIMEOUT_1 1
 #define BLACKBOX_TIMEOUT_2 125
 
-BlackBox* blackbox;
+//BlackBox* blackbox; // TEMP
 
-// These functions are called when the buttons are pressed
-void on_up() {}
-void on_down() {}
-void on_left() {}
-void on_right() {}
-void on_select() {}
-
-// These functions are called repeatedly
-void on_timeout_1() {}
-void on_timeout_2() {}
-
-const int FOCAL_LENGTH = 10;
-const float SPEED = 0.1;
+const int FOCAL_LENGTH = 2;
+const float SPEED = 1;
 
 const float PI = 3.1415926535;
 const int TERMS = 7;
@@ -55,6 +46,32 @@ float R22 = 1;
 
 float xProjected; // float xProjected, yProjected; does not work
 float yProjected;
+
+// MOVEMENT //
+
+float moveX = 0;
+float moveY = 0;
+float moveZ = 0;
+
+// These functions are called when the buttons are pressed
+void on_up() {
+    moveZ += 1;
+}
+void on_down() {
+    moveZ -= 1;
+}
+void on_left() {
+    moveX -= 1;
+}
+void on_right() {
+    moveX += 1;
+}
+void on_select() {}
+
+// These functions are called repeatedly
+void on_timeout_1() {}
+void on_timeout_2() {}
+
 
 // MATH //
 
@@ -152,25 +169,6 @@ int toInt(float num) {
     return -1;
 }
 
-// PROJECTION //
-
-int project(float p0, float p1, float p2) {
-    float P1x = p0 - x;
-    float P1y = p1 - y;
-    float P1z = p2 - z;
-
-    float P2x = (R00 * P1x) + (R10 * P1y) + (R20 * P1z); // Hardcoded R_inv
-    float P2y = (R01 * P1x) + (R11 * P1y) + (R21 * P1z);
-    float P2z = (R02 * P1x) + (R12 * P1y) + (R22 * P1z);
-
-    if (P2z > 0) {
-        xProjected = FOCAL_LENGTH * P2x / P2z;
-        yProjected = FOCAL_LENGTH * P2y / P2z;
-        return 1;
-    }
-    return 0;
-}
-
 // MATRICES AND QUATERNIONS //
 
 void multiplyRWithQuat(float q20, float q21, float q22, float q23) { // Stores result in first quaternion
@@ -248,20 +246,65 @@ void updateR() {
     R22 = 1 - 2 * x1 * x1 - 2 * y1 * y1;
 }
 
+// PROJECTION //
+
+int project(float p0, float p1, float p2) {
+    if (moveX != 0 || moveY != 0 || moveZ != 0) {
+        moveCamera(moveX, moveY, moveZ);
+
+        moveX = 0;
+        moveY = 0;
+        moveZ = 0;
+
+        //blackbox.matrix.turn_all_off(); // TEMP
+    }
+
+    float P1x = p0 - x;
+    float P1y = p1 - y;
+    float P1z = p2 - z;
+
+    float P2x = (R00 * P1x) + (R10 * P1y) + (R20 * P1z); // Hardcoded R_inv
+    float P2y = (R01 * P1x) + (R11 * P1y) + (R21 * P1z);
+    float P2z = (R02 * P1x) + (R12 * P1y) + (R22 * P1z);
+
+    if (P2z > 0) {
+        xProjected = FOCAL_LENGTH * P2x / P2z;
+        yProjected = FOCAL_LENGTH * P2y / P2z;
+        return 1;
+    }
+    return 0;
+}
+
+// MAIN //
+
 void main() {
-    while (1) {
+  int draw;
+
+  int xDraw;
+  int yDraw;
+  int i = 0; //TEMP
+    while (i == 0) { // TEMP
+        i++; //TEMP
         // Point to project
         //float point[3] = {0, 2, 2};
-        float p0 = 0;
-        float p1 = 0;
-        float p2 = 2;
+        float p0 = 6.0;
+        float p1 = 6.0;
+        float p2 = 1.0;
+
+        //updateR(); // Update rotation matrix after rotation
 
         // Project point
         //project(R, R_inv, point, &xPos, &yPos);
-        project(p0, p1, p2);
+        draw = project(p0, p1, p2);
 
-        //updateR(); // Update rotation matrix after movement
+        xDraw = toInt(xProjected);
+        yDraw = toInt(yProjected);
 
-        blackbox.matrix.pixel(toInt(xProjected)+4, toInt(yProjected)+4).turn_on();
+        if (draw == 1 && xDraw != -1 && yDraw != -1) {
+            //blackbox.matrix.pixel_xy(xDraw, xDraw).turn_on(); // TEMP
+            printf("X: %d\nY: %d\n\n", xDraw, xDraw); // TEMP
+        }
+        //blackbox.sleep(5);
+        //printf("X: %f\nY: %f\n\n", xProjected, yProjected);
     }
 }

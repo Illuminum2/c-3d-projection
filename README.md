@@ -42,7 +42,7 @@ These are a few of the technical difficulties I faced while working on this proj
 
 ## To-Do
 
-- **Implement controls**
+- **Implement controls**: Done ~70%
 - **Potentially add sound**
 
 ## License
