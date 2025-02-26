@@ -24,9 +24,6 @@ void on_select() {}
 void on_timeout_1() {}
 void on_timeout_2() {}
 
-#define BLACKBOX_TIMEOUT_1 1
-#define BLACKBOX_TIMEOUT_2 125
-
 const int FOCAL_LENGTH = 10;
 const float SPEED = 0.1;
 
@@ -72,6 +69,7 @@ float power(float base, int exp);
 int fact(int n);
 float sqroot(float square);
 float min(float i, float j);
+int toInt(float num);
 
 float xProjected; // float xProjected, yProjected; does not work
 float yProjected;
@@ -90,7 +88,7 @@ void main() {
 
     //updateR(); // Update rotation matrix after movement
 
-    blackbox->matrix.pixel(xProjected, yProjected)->turn_on();
+    blackbox->matrix.pixel(toInt(xProjected)+4, toInt(yProjected)+4)->turn_on();
   }
 }
 
@@ -253,4 +251,35 @@ float min(float i, float j) {
         return i;
     }
     return j;
+}
+
+int toInt(float num) {
+    if (num < -0.5) {
+        return -1;
+    }
+    if (num < 0.5) {
+        return 0;
+    }
+    if (num < 1.5) {
+        return 1;
+    }
+    if (num < 2.5) {
+        return 2;
+    }
+    if (num < 3.5) {
+        return 3;
+    }
+    if (num < 4.5) {
+        return 4;
+    }
+    if (num < 5.5) {
+        return 5;
+    }
+    if (num < 6.5) {
+        return 6;
+    }
+    if (num < 7.5) {
+        return 7;
+    }
+    return -1;
 }
