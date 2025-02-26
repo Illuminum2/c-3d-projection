@@ -2,7 +2,7 @@
 
 **Warning**: This project is still a WIP and not totally finished
 
-This project is a simple 3D "engine" written in C for the [Blackbox](https://blackbox.hackclub.com), which has a resolution of only 8x8 pixels. It's similar to my [Python 3D projection](https://github.com/Illuminum2/pygame-3d-projection). 
+This project is a simple 3D "engine" written in C for the [Blackbox](https://blackbox.hackclub.com) YSWS, which is centered around the theme constraints. It's a device with a resolution of only 8x8 pixels. The math is similar to my [Python 3D projection](https://github.com/Illuminum2/pygame-3d-projection) projection. 
 
 ## Features
 
@@ -11,14 +11,18 @@ This project is a simple 3D "engine" written in C for the [Blackbox](https://bla
 
 ## Difficulties
 
-- **No external libraries**: The blackbox editor does **NOT** allow external libraries, which means this project was written without:
+These are a few of the technical difficulties I faced while working on this project. The things mentioned here are not supported by the Blackbox editor:
+
+- **No external libraries**: External libraries are **NOT** allowed, this project was made without:
 - - `math.h`: sin(), cos(), pow(), sqrt()
 - - `stdlib.h`: malloc(), realloc(), calloc(), free()
-- **No pointers**: There are issues with * and & in the Blackbox editor, so no pointer were used
-- **No arrays**: Arrays currently do not work in the Blackbox editor, everything is array free
-- **No structs**: Structs do not work at the moment in the Blackbox editor, everything is struct free
-- **No preprocessor directives**: At the moment user made preprocessor directives do not work, I used constants instead
-- **Others**: Some other convenience features of the C language are also not supported
+- **No pointers**: There are issues with * and &, no pointer were used
+- **No arrays**
+- **No structs**
+- **No function prototypes**: Function prototyping does not seem to work
+- **No typecasts**: ToInt() function had to be implemented
+- **No preprocessor directives**: Don't seem to work
+- **Others**: Some other convenience features of the C language are also not usable
 
 ## How to Run
 

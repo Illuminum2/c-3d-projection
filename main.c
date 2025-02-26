@@ -53,43 +53,103 @@ float R20 = 0;
 float R21 = 0;
 float R22 = 1;
 
-int project(float p0, float p1, float p2);
-
-void setCamera(float xNew, float yNew, float zNew);
-void moveCamera(float m0, float m1, float m2);
-void rotateCamera(float deltaAngleDegrees, float a0, float a1, float a2);
-void updateR(); // void updateR(void); doesn't work
-
-void multiplyRWithQuat(float q20, float q21, float q22, float q23);
-void normalizeR();
-
-float sine(float deg);
-float cosine(float deg);
-float power(float base, int exp);
-int fact(int n);
-float sqroot(float square);
-float min(float i, float j);
-int toInt(float num);
-
 float xProjected; // float xProjected, yProjected; does not work
 float yProjected;
 
-void main() {
-  while (1) {
-    // Point to project
-    //float point[3] = {0, 2, 2};
-    float p0 = 0;
-    float p1 = 2;
-    float p2 = 2;
+// MATH //
 
-    // Project point
-    //project(R, R_inv, point, &xPos, &yPos);
-    project(p0, p1, p2);
+float power(float base, int exp) {
+    if(exp < 0) {
+        if(base == 0) { // if without {} does not work
+            return -0; // Error
+        }
+        return 1 / (base * power(base, (-exp) - 1));
+    }
+    if(exp == 0) {
+        return 1;
+    }
+    if(exp == 1) {
+        return base;
+    }
+    return base * power(base, exp - 1);
+}
 
-    //updateR(); // Update rotation matrix after movement
+int fact(int n) {
+    return n <= 0 ? 1 : n * fact(n-1);
+}
 
-    blackbox->matrix.pixel(toInt(xProjected)+4, toInt(yProjected)+4)->turn_on();
-  }
+float min(float i, float j) {
+    if (i < j) {
+        return i;
+    }
+    return j;
+}
+
+float sine(float deg) { // Modified from https://stackoverflow.com/questions/38917692/sin-cos-funcs-without-math-h
+    //deg %= 360; // make it less than 360
+    deg = min(deg, 360);
+    float rad = deg * PI / 180;
+    float sin = 0;
+
+    for(int i = 0; i < TERMS; i++) { // That's Taylor series!!
+        sin += power(-1, i) * power(rad, 2 * i + 1) / fact(2 * i + 1);
+    }
+    return sin;
+}
+
+float cosine(float deg) {
+    //deg %= 360; // make it less than 360
+    deg = min(deg, 360);
+    float rad = deg * PI / 180;
+    float cos = 0;
+
+    for(int i = 0; i < TERMS; i++) { // That's also Taylor series!!
+        cos += power(-1, i) * power(rad, 2 * i) / fact(2 * i);
+    }
+    return cos;
+}
+
+float sqroot(float square) // Modified from https://stackoverflow.com/questions/29018864/any-way-to-obtain-square-root-of-a-number-without-using-math-h-and-sqrt
+{
+    float root=square/3;
+    if (square <= 0) { // One-line if does not work
+      return 0;
+    }
+    for (int i = 0; i < SQROOT_ITER; i++) { // for without {} does not work
+        root = (root + square / root) / 2;
+    }
+    return root;
+}
+
+int toInt(float num) {
+    if (num < -0.5) {
+        return -1;
+    }
+    if (num < 0.5) {
+        return 0;
+    }
+    if (num < 1.5) {
+        return 1;
+    }
+    if (num < 2.5) {
+        return 2;
+    }
+    if (num < 3.5) {
+        return 3;
+    }
+    if (num < 4.5) {
+        return 4;
+    }
+    if (num < 5.5) {
+        return 5;
+    }
+    if (num < 6.5) {
+        return 6;
+    }
+    if (num < 7.5) {
+        return 7;
+    }
+    return -1;
 }
 
 // PROJECTION //
@@ -109,6 +169,39 @@ int project(float p0, float p1, float p2) {
         return 1;
     }
     return 0;
+}
+
+// MATRICES AND QUATERNIONS //
+
+void multiplyRWithQuat(float q20, float q21, float q22, float q23) { // Stores result in first quaternion
+    float w1 = quat0; // For better readability
+    float x1 = quat1;
+    float y1 = quat2;
+    float z1 = quat3;
+
+    float w2 = q20;
+    float x2 = q21;
+    float y2 = q22;
+    float z2 = q23;
+
+    quat0 = w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2;
+    quat1 = w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2;
+    quat2 = w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2;
+    quat3 = w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2;
+}
+
+void normalizeR() {
+    float w1 = quat0; // For better readability
+    float x1 = quat1;
+    float y1 = quat2;
+    float z1 = quat3;
+
+    float length = sqroot(w1 * w1 + x1 * x1 + y1 * y1 + z1 * z1);
+
+    quat0 = w1 / length;
+    quat1 = x1 / length;
+    quat2 = y1 / length;
+    quat3 = z1 / length;
 }
 
 // CAMERA //
@@ -155,131 +248,20 @@ void updateR() {
     R22 = 1 - 2 * x1 * x1 - 2 * y1 * y1;
 }
 
-// MATRICES AND QUATERNIONS //
+void main() {
+    while (1) {
+        // Point to project
+        //float point[3] = {0, 2, 2};
+        float p0 = 0;
+        float p1 = 0;
+        float p2 = 2;
 
-void multiplyRWithQuat(float q20, float q21, float q22, float q23) { // Stores result in first quaternion
-    float w1 = quat0; // For better readability
-    float x1 = quat1;
-    float y1 = quat2;
-    float z1 = quat3;
+        // Project point
+        //project(R, R_inv, point, &xPos, &yPos);
+        project(p0, p1, p2);
 
-    float w2 = q20;
-    float x2 = q21;
-    float y2 = q22;
-    float z2 = q23;
+        //updateR(); // Update rotation matrix after movement
 
-    quat0 = w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2;
-    quat1 = w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2;
-    quat2 = w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2;
-    quat3 = w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2;
-}
-
-void normalizeR() {
-    float w1 = quat0; // For better readability
-    float x1 = quat1;
-    float y1 = quat2;
-    float z1 = quat3;
-
-    float length = sqroot(w1 * w1 + x1 * x1 + y1 * y1 + z1 * z1);
-
-    quat0 = w1 / length;
-    quat1 = x1 / length;
-    quat2 = y1 / length;
-    quat3 = z1 / length;
-}
-
-// MATH //
-
-float sine(float deg) { // Modified from https://stackoverflow.com/questions/38917692/sin-cos-funcs-without-math-h
-    //deg %= 360; // make it less than 360
-    deg = min(deg, 360);
-    float rad = deg * PI / 180;
-    float sin = 0;
-
-    for(int i = 0; i < TERMS; i++) { // That's Taylor series!!
-        sin += power(-1, i) * power(rad, 2 * i + 1) / fact(2 * i + 1);
+        blackbox.matrix.pixel(toInt(xProjected)+4, toInt(yProjected)+4).turn_on();
     }
-    return sin;
-}
-
-float cosine(float deg) {
-    //deg %= 360; // make it less than 360
-    deg = min(deg, 360);
-    float rad = deg * PI / 180;
-    float cos = 0;
-
-    for(int i = 0; i < TERMS; i++) { // That's also Taylor series!!
-        cos += power(-1, i) * power(rad, 2 * i) / fact(2 * i);
-    }
-    return cos;
-}
-
-float power(float base, int exp) {
-    if(exp < 0) {
-        if(base == 0) { // if without {} does not work
-            return -0; // Error
-        }
-        return 1 / (base * power(base, (-exp) - 1));
-    }
-    if(exp == 0) {
-        return 1;
-    }
-    if(exp == 1) {
-        return base;
-    }
-    return base * power(base, exp - 1);
-}
-
-int fact(int n) {
-    return n <= 0 ? 1 : n * fact(n-1);
-}
-
-float sqroot(float square) // Modified from https://stackoverflow.com/questions/29018864/any-way-to-obtain-square-root-of-a-number-without-using-math-h-and-sqrt
-{
-    float root=square/3;
-    if (square <= 0) { // One-line if does not work
-      return 0;
-    }
-    for (int i = 0; i < SQROOT_ITER; i++) { // for without {} does not work
-        root = (root + square / root) / 2;
-    }
-    return root;
-}
-
-float min(float i, float j) {
-    if (i < j) {
-        return i;
-    }
-    return j;
-}
-
-int toInt(float num) {
-    if (num < -0.5) {
-        return -1;
-    }
-    if (num < 0.5) {
-        return 0;
-    }
-    if (num < 1.5) {
-        return 1;
-    }
-    if (num < 2.5) {
-        return 2;
-    }
-    if (num < 3.5) {
-        return 3;
-    }
-    if (num < 4.5) {
-        return 4;
-    }
-    if (num < 5.5) {
-        return 5;
-    }
-    if (num < 6.5) {
-        return 6;
-    }
-    if (num < 7.5) {
-        return 7;
-    }
-    return -1;
 }
