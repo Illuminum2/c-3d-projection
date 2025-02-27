@@ -34,15 +34,14 @@ These are a few of the technical difficulties I faced while working on this proj
 
 ## Controls
 
-- **Arrow Key Up**: Move forward/Look up
-- **Arrow Key Down**: Move backward/Look down
-- **Arrow Key Left**: Move left/Look left
-- **Arrow Key Right**: Move right/Look right
-- **X**: Switch between movement and rotation
+- **Arrow Key Up**: 1: Move forward 2: Move Up
+- **Arrow Key Down**: 1: Move backward 2: Move Down
+- **Arrow Key Left**: 1: Move left 2:Look left
+- **Arrow Key Right**: 1: Move right 2: Look right
+- **X**: Switch between 1 and 2
 
 ## To-Do
 
-- **Implement controls**: Done ~70%
 - **Potentially add sound**
 
 ## License

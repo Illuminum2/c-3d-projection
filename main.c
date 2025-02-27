@@ -6,17 +6,19 @@
 //  Semi-port of my Pygame 3D projection project to C
 //
 
-#include <stdio.h> // TEMP
-
 //#include "blackbox.h" // TEMP
+#include "stdio.h" // TEMP
 
 #define BLACKBOX_TIMEOUT_1 1
 #define BLACKBOX_TIMEOUT_2 125
 
 //BlackBox* blackbox; // TEMP
 
-const int FOCAL_LENGTH = 2;
-const float SPEED = 1;
+const int FOCAL_LENGTH = 289;
+const int SIMULATED_DISPLAY_SIZE = 1000;
+const int REAL_DISPLAY_SIZE = 8;
+
+const float SPEED = 0.1*20;
 
 const float PI = 3.1415926535;
 const int TERMS = 7;
@@ -24,13 +26,11 @@ const int SQROOT_ITER = 32; // Could probably be lower
 
 float x = 0.0;
 float y = 0.0;
-float z = -2.0;
+float z = 0.0;
 float quat0 = 1.0;
 float quat1 = 0.0;
 float quat2 = 0.0;
 float quat3 = 0.0;
-float focalLength = FOCAL_LENGTH;
-float speed = SPEED;
 
 // Identity matrix
 //float R[3][3] = {{1,0,0}, {0,1,0}, {0,0,1}};
@@ -53,25 +53,57 @@ float moveX = 0;
 float moveY = 0;
 float moveZ = 0;
 
-// These functions are called when the buttons are pressed
+float turnX = 0;
+float turnY = 0;
+float turnZ = 0;
+
+int MTMode = 0; // Movement is 0, Turning is 1
+
+// Functions called when buttons are pressed
 void on_up() {
-    moveZ += 1;
+    if (MTMode == 0) {
+        moveZ += 1;
+    }
+    else {
+        moveY -= 1;
+    }
 }
 void on_down() {
-    moveZ -= 1;
+    if (MTMode == 0) {
+        moveZ -= 1;
+    }
+    else {
+        moveY += 1;
+    }
 }
 void on_left() {
-    moveX -= 1;
+    if (MTMode == 0) {
+        moveX -= 1;
+    }
+    else {
+        turnY -= 5;
+    }
 }
 void on_right() {
-    moveX += 1;
+    if (MTMode == 0) {
+        moveX += 1;
+    }
+    else {
+        turnY += 5;
+    }
 }
-void on_select() {}
+void on_select() {
+    if (MTMode == 0) {
+        MTMode = 1;
+    }
+    else {
+        MTMode = 0;
+    }
+}
 
 // These functions are called repeatedly
 void on_timeout_1() {}
 void on_timeout_2() {}
-
 
 // MATH //
 
@@ -102,10 +134,14 @@ float min(float i, float j) {
     return j;
 }
 
-float sine(float deg) { // Modified from https://stackoverflow.com/questions/38917692/sin-cos-funcs-without-math-h
-    //deg %= 360; // make it less than 360
-    deg = min(deg, 360);
-    float rad = deg * PI / 180;
+float max(float i, float j) {
+    if (i > j) {
+        return i;
+    }
+    return j;
+}
+
+float sine(float rad) { // Modified from https://stackoverflow.com/questions/38917692/sin-cos-funcs-without-math-h
     float sin = 0;
 
     for(int i = 0; i < TERMS; i++) { // That's Taylor series!!
@@ -114,10 +150,7 @@ float sine(float deg) { // Modified from https://stackoverflow.com/questions/389
     return sin;
 }
 
-float cosine(float deg) {
-    //deg %= 360; // make it less than 360
-    deg = min(deg, 360);
-    float rad = deg * PI / 180;
+float cosine(float rad) {
     float cos = 0;
 
     for(int i = 0; i < TERMS; i++) { // That's also Taylor series!!
@@ -138,40 +171,9 @@ float sqroot(float square) // Modified from https://stackoverflow.com/questions/
     return root;
 }
 
-int toInt(float num) {
-    if (num < -0.5) {
-        return -1;
-    }
-    if (num < 0.5) {
-        return 0;
-    }
-    if (num < 1.5) {
-        return 1;
-    }
-    if (num < 2.5) {
-        return 2;
-    }
-    if (num < 3.5) {
-        return 3;
-    }
-    if (num < 4.5) {
-        return 4;
-    }
-    if (num < 5.5) {
-        return 5;
-    }
-    if (num < 6.5) {
-        return 6;
-    }
-    if (num < 7.5) {
-        return 7;
-    }
-    return -1;
-}
-
 // MATRICES AND QUATERNIONS //
 
-void multiplyRWithQuat(float q20, float q21, float q22, float q23) { // Stores result in first quaternion
+void multiplyQWithQuat(float q20, float q21, float q22, float q23) { // Multiply camera quaternion with quaternion
     float w1 = quat0; // For better readability
     float x1 = quat1;
     float y1 = quat2;
@@ -182,13 +184,13 @@ void multiplyRWithQuat(float q20, float q21, float q22, float q23) { // Stores r
     float y2 = q22;
     float z2 = q23;
 
-    quat0 = w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2;
+    quat0 = w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2; // Result stored in camera quaternion
     quat1 = w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2;
     quat2 = w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2;
     quat3 = w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2;
 }
 
-void normalizeR() {
+void normalizeQ() { // Normalize camera quaternion
     float w1 = quat0; // For better readability
     float x1 = quat1;
     float y1 = quat2;
@@ -211,20 +213,20 @@ void setCamera(float xNew, float yNew, float zNew) {
 }
 
 void moveCamera(float m0, float m1, float m2) {
-    x += (R00 * speed * m0) + (R01 * speed * m1) + (R02 * speed * m2);
-    y += (R10 * speed * m0) + (R11 * speed * m1) + (R12 * speed * m2);
-    z += (R20 * speed * m0) + (R21 * speed * m1) + (R22 * speed * m2);
+    x += (R00 * SPEED * m0) + (R01 * SPEED * m1) + (R02 * SPEED * m2);
+    y += (R10 * SPEED * m0) + (R11 * SPEED * m1) + (R12 * SPEED * m2);
+    z += (R20 * SPEED * m0) + (R21 * SPEED * m1) + (R22 * SPEED * m2);
 }
 
 void rotateCamera(float deltaAngleDegrees, float a0, float a1, float a2) {
-    float deltaAngle = (deltaAngleDegrees * (PI/180)) / 2;
+    float deltaAngle = (min(deltaAngleDegrees, 360) * (PI / 180)) / 2;
     float deltaQ0 = cosine(deltaAngle);
     float deltaQ1 = a0 * sine(deltaAngle);
     float deltaQ2 = a1 * sine(deltaAngle);
     float deltaQ3 = a2 * sine(deltaAngle);
 
-    multiplyRWithQuat(deltaQ0, deltaQ1, deltaQ2, deltaQ3);
-    normalizeR();
+    multiplyQWithQuat(deltaQ0, deltaQ1, deltaQ2, deltaQ3);
+    normalizeQ();
 }
 
 void updateR() {
@@ -246,9 +248,9 @@ void updateR() {
     R22 = 1 - 2 * x1 * x1 - 2 * y1 * y1;
 }
 
-// PROJECTION //
+// MOVEMENT/TURN UPDATE //
 
-int project(float p0, float p1, float p2) {
+void mtUpdate() {
     if (moveX != 0 || moveY != 0 || moveZ != 0) {
         moveCamera(moveX, moveY, moveZ);
 
@@ -258,6 +260,32 @@ int project(float p0, float p1, float p2) {
 
         //blackbox.matrix.turn_all_off(); // TEMP
     }
+
+    if (turnX != 0 || turnY != 0 || turnZ != 0) {
+        if (turnX != 0) {
+            rotateCamera(turnX, 1, 0, 0);
+            updateR();
+            turnX = 0;
+        }
+        if (turnY != 0) {
+            rotateCamera(turnY, 0, 1, 0);
+            updateR();
+            turnY = 0;
+        }
+        if (turnZ != 0) {
+            rotateCamera(turnZ, 0, 0, 1);
+            updateR();
+            turnZ = 0;
+        }
+
+        //blackbox.matrix.turn_all_off(); // TEMP
+    }
+}
+
+// PROJECTION //
+
+int project(float p0, float p1, float p2) { // Project point
+    //project(R, R_inv, point, &xPos, &yPos);
 
     float P1x = p0 - x;
     float P1y = p1 - y;
@@ -275,36 +303,89 @@ int project(float p0, float p1, float p2) {
     return 0;
 }
 
+int scale(float num) {
+    float base = -SIMULATED_DISPLAY_SIZE/2;
+    float increment = SIMULATED_DISPLAY_SIZE/REAL_DISPLAY_SIZE;
+    if (num < base) {
+        return -1;
+    }
+    if (num < base+increment*1) {
+        return 0;
+    }
+    if (num < base+increment*2) {
+        return 1;
+    }
+    if (num < base+increment*3) {
+        return 2;
+    }
+    if (num < base+increment*4) {
+        return 3;
+    }
+    if (num < base+increment*5) {
+        return 4;
+    }
+    if (num < base+increment*6) {
+        return 5;
+    }
+    if (num < base+increment*7) {
+        return 6;
+    }
+    if (num < base+increment*8) {
+        return 7;
+    }
+    return -1;
+}
+
+// DRAW //
+
+void draw(int print, int i) { // TEMP
+    int xDraw = scale(xProjected);
+    int yDraw = scale(yProjected);
+
+    if (xDraw != -1 && yDraw != -1 && print) { // TEMP
+        //blackbox.matrix.pixel_xy(xDraw, yDraw).turn_on(); // TEMP
+        printf("Run: %d\nX: %d\nY: %d\n\n", i, xDraw, yDraw); // TEMP
+    }
+}
+
 // MAIN //
 
 void main() {
-  int draw;
+    // Point to project
+    //float point[3] = {0, 2, 2};
+    float p00 = -3.0; // Point 1
+    float p01 = 2.0;
+    float p02 = 2.0;
 
-  int xDraw;
-  int yDraw;
-  int i = 0; //TEMP
-    while (i == 0) { // TEMP
-        i++; //TEMP
-        // Point to project
-        //float point[3] = {0, 2, 2};
-        float p0 = 6.0;
-        float p1 = 6.0;
-        float p2 = 1.0;
+    float p10 = 3.0; // Point 2
+    float p11 = 2.0;
+    float p12 = 2.0;
 
-        //updateR(); // Update rotation matrix after rotation
+    float p20 = 0.0; // Point 3
+    float p21 = -4.0;
+    float p22 = 2.0;
 
-        // Project point
-        //project(R, R_inv, point, &xPos, &yPos);
-        draw = project(p0, p1, p2);
+    int i = 0; // TEMP
 
-        xDraw = toInt(xProjected);
-        yDraw = toInt(yProjected);
-
-        if (draw == 1 && xDraw != -1 && yDraw != -1) {
-            //blackbox.matrix.pixel_xy(xDraw, xDraw).turn_on(); // TEMP
-            printf("X: %d\nY: %d\n\n", xDraw, xDraw); // TEMP
+    setCamera(0, 0, -2); // Remove?
+    while (i<10) { // TEMP
+        i++; // TEMP
+        if (i == 9) { // TEMP
+            turnY = 5;
         }
+
+        mtUpdate();
+
+        if (project(p00, p01, p02)) { // Draw point 1
+            draw(1, i); // TEMP
+        }
+        if (project(p10, p11, p12)) { // Draw point 2
+            draw(0, 0); // TEMP
+        }
+        if (project(p20, p21, p22)) { // Draw point 3
+            draw(0, 0); // TEMP
+        }
+
         //blackbox.sleep(5);
-        //printf("X: %f\nY: %f\n\n", xProjected, yProjected);
     }
 }
