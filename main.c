@@ -6,13 +6,12 @@
 //  Semi-port of my Pygame 3D projection project to C
 //
 
-//#include "blackbox.h" // TEMP
-#include "stdio.h" // TEMP
+#include "blackbox.h"
 
 #define BLACKBOX_TIMEOUT_1 1
 #define BLACKBOX_TIMEOUT_2 125
 
-//BlackBox* blackbox; // TEMP
+BlackBox* blackbox;
 
 const int FOCAL_LENGTH = 289;
 const int SIMULATED_DISPLAY_SIZE = 1000;
@@ -81,7 +80,17 @@ void on_left() {
         moveX -= 1;
     }
     else {
-        turnY -= 5;
+        // Temporary rotation fix, simpler direct matrix rotation
+        R00 = R00 * 0.9962178865 + R02 * 0.086890291;  // cos/sin of 0.087 rad(~5 degrees)
+        R02 = -R00 * 0.086890291 + R02 * 0.9962178865;
+
+        R10 = R10 * 0.9962178865 + R12 * 0.086890291;
+        R12 = -R10 * 0.086890291 + R12 * 0.9962178865;
+
+        R20 = R20 * 0.9962178865 + R22 * 0.086890291;
+        R22 = -R20 * 0.086890291 + R22 * 0.9962178865;
+
+        blackbox.matrix.turn_all_off();
     }
 }
 void on_right() {
@@ -89,7 +98,16 @@ void on_right() {
         moveX += 1;
     }
     else {
-        turnY += 5;
+        R00 = R00 * 0.9962178865 - R02 * 0.086890291;
+        R02 = R00 * 0.086890291 + R02 * 0.9962178865;
+
+        R10 = R10 * 0.9962178865 - R12 * 0.086890291;
+        R12 = R10 * 0.086890291 + R12 * 0.9962178865;
+
+        R20 = R20 * 0.9962178865 - R22 * 0.086890291;
+        R22 = R20 * 0.086890291 + R22 * 0.9962178865;
+
+        blackbox.matrix.turn_all_off();
     }
 }
 void on_select() {
@@ -258,7 +276,7 @@ void mtUpdate() {
         moveY = 0;
         moveZ = 0;
 
-        //blackbox.matrix.turn_all_off(); // TEMP
+        blackbox.matrix.turn_all_off();
     }
 
     if (turnX != 0 || turnY != 0 || turnZ != 0) {
@@ -278,7 +296,7 @@ void mtUpdate() {
             turnZ = 0;
         }
 
-        //blackbox.matrix.turn_all_off(); // TEMP
+        blackbox.matrix.turn_all_off();
     }
 }
 
@@ -338,13 +356,12 @@ int scale(float num) {
 
 // DRAW //
 
-void draw(int print, int i) { // TEMP
+void draw() {
     int xDraw = scale(xProjected);
     int yDraw = scale(yProjected);
 
-    if (xDraw != -1 && yDraw != -1 && print) { // TEMP
-        //blackbox.matrix.pixel_xy(xDraw, yDraw).turn_on(); // TEMP
-        printf("Run: %d\nX: %d\nY: %d\n\n", i, xDraw, yDraw); // TEMP
+    if (xDraw != -1 && yDraw != -1) {
+        blackbox.matrix.pixel_xy(xDraw, yDraw).turn_on();
     }
 }
 
@@ -365,25 +382,19 @@ void main() {
     float p21 = -4.0;
     float p22 = 2.0;
 
-    int i = 0; // TEMP
+    setCamera(0, 0, -2); // Maybe remove
 
-    setCamera(0, 0, -2); // Remove?
-    while (i<10) { // TEMP
-        i++; // TEMP
-        if (i == 9) { // TEMP
-            turnY = 5;
-        }
-
+    while (1) {
         mtUpdate();
 
         if (project(p00, p01, p02)) { // Draw point 1
-            draw(1, i); // TEMP
+            draw();
         }
         if (project(p10, p11, p12)) { // Draw point 2
-            draw(0, 0); // TEMP
+            draw();
         }
         if (project(p20, p21, p22)) { // Draw point 3
-            draw(0, 0); // TEMP
+            draw();
         }
 
         //blackbox.sleep(5);
