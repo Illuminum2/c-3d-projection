@@ -2,8 +2,19 @@
 //  main.c
 //  3DProjection
 //
-//  Created by Illuminum on 2/24/25.
-//  Semi-port of my Pygame 3D projection project to C
+//  Created by Illuminum on 2/24/25 for the Blackbox YSWS
+//  Repo: https://github.com/Illuminum2/c-3d-projection
+//  Run: https://blackbox.hackclub.com/editor/?code=2e5f68
+//  Semi-port of my Pygame 3D projection project to C, heavily modified
+//
+
+//
+//  Controls
+//  Up - 1: Move forward 2: Move Up
+//  Down - 1: Move backward 2: Move Down
+//  Left - 1: Move left 2:Look left
+//  Right - 1: Move right 2: Look right
+//  X - Switch between 1 and 2
 //
 
 #include "blackbox.h"

@@ -9,6 +9,8 @@ This project is a simple 3D "engine" written in C for the [Blackbox](https://bla
 - **Projection**: Matrices for projection onto the display
 - **Rotation**: Quaternions for rotation of the camera to avoiding gimbal lock.
 
+_**Notes**: Currently using direct rotation matrix manipulation as a temporary fix!_
+
 ## Difficulties
 
 These are a few of the technical difficulties I faced while working on this project. The things mentioned here are not supported by the Blackbox editor:
@@ -26,11 +28,9 @@ These are a few of the technical difficulties I faced while working on this proj
 
 ## How to Run
 
-1. Copy the ``main.c` file
+Option 1: You can access the project [here](https://blackbox.hackclub.com/editor/?code=2e5f68) on the Blackbox website.
 
-2. Paste it into the [editor](https://blackbox.hackclub.com/editor/)
-
-3. Hit the sound icon, and then press start
+Option 2: Copy the `main.c` file. Paste it into the [editor](https://blackbox.hackclub.com/editor/).
 
 ## Controls
 
