@@ -101,7 +101,7 @@ void on_left() {
         R20 = R20 * 0.9962178865 + R22 * 0.086890291;
         R22 = -R20 * 0.086890291 + R22 * 0.9962178865;
 
-        blackbox.matrix.turn_all_off();
+        //blackbox.matrix.turn_all_off();
     }
 }
 void on_right() {
@@ -118,7 +118,7 @@ void on_right() {
         R20 = R20 * 0.9962178865 - R22 * 0.086890291;
         R22 = R20 * 0.086890291 + R22 * 0.9962178865;
 
-        blackbox.matrix.turn_all_off();
+        //blackbox.matrix.turn_all_off();
     }
 }
 void on_select() {
@@ -287,7 +287,7 @@ void mtUpdate() {
         moveY = 0;
         moveZ = 0;
 
-        blackbox.matrix.turn_all_off();
+        //blackbox.matrix.turn_all_off();
     }
 
     if (turnX != 0 || turnY != 0 || turnZ != 0) {
@@ -307,7 +307,7 @@ void mtUpdate() {
             turnZ = 0;
         }
 
-        blackbox.matrix.turn_all_off();
+        //blackbox.matrix.turn_all_off();
     }
 }
 
@@ -371,6 +371,7 @@ void draw() {
     int xDraw = scale(xProjected);
     int yDraw = scale(yProjected);
 
+    blackbox.matrix.turn_all_off();
     if (xDraw != -1 && yDraw != -1) {
         blackbox.matrix.pixel_xy(xDraw, yDraw).turn_on();
     }
