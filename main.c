@@ -27,8 +27,11 @@ BlackBox* blackbox;
 const int FOCAL_LENGTH = 289;
 const int SIMULATED_DISPLAY_SIZE = 1000;
 const int REAL_DISPLAY_SIZE = 8;
+const int DISPLAY_MIN = -SIMULATED_DISPLAY_SIZE/2;
 
 const float SPEED = 0.1*20;
+const float ROT_SPEED_SIN = 0.2588190451; // sin of 0.087 rad(~5 degrees)
+const float ROT_SPEED_COS = 0.9659258263; // cos of 0.087 rad(~5 degrees)
 
 const float PI = 3.1415926535;
 const int TERMS = 7;
@@ -68,6 +71,7 @@ float turnY = 0;
 float turnZ = 0;
 
 int MTMode = 0; // Movement is 0, Turning is 1
+int DPUpdate = 1; // Has the position/rotation of the camera been changed
 
 // Functions called when buttons are pressed
 void on_up() {
@@ -77,6 +81,7 @@ void on_up() {
     else {
         moveY -= 1;
     }
+    DPUpdate = 1;
 }
 void on_down() {
     if (MTMode == 0) {
@@ -85,6 +90,7 @@ void on_down() {
     else {
         moveY += 1;
     }
+    DPUpdate = 1;
 }
 void on_left() {
     if (MTMode == 0) {
@@ -92,34 +98,36 @@ void on_left() {
     }
     else {
         // Temporary rotation fix, simpler direct matrix rotation
-        R00 = R00 * 0.9962178865 + R02 * 0.086890291;  // cos/sin of 0.087 rad(~5 degrees)
-        R02 = -R00 * 0.086890291 + R02 * 0.9962178865;
+        R00 = R00 * ROT_SPEED_COS + R02 * ROT_SPEED_SIN;
+        R02 = -R00 * ROT_SPEED_SIN + R02 * ROT_SPEED_COS;
 
-        R10 = R10 * 0.9962178865 + R12 * 0.086890291;
-        R12 = -R10 * 0.086890291 + R12 * 0.9962178865;
+        R10 = R10 * ROT_SPEED_COS + R12 * ROT_SPEED_SIN;
+        R12 = -R10 * ROT_SPEED_SIN + R12 * ROT_SPEED_COS;
 
-        R20 = R20 * 0.9962178865 + R22 * 0.086890291;
-        R22 = -R20 * 0.086890291 + R22 * 0.9962178865;
+        R20 = R20 * ROT_SPEED_COS + R22 * ROT_SPEED_SIN;
+        R22 = -R20 * ROT_SPEED_SIN + R22 * ROT_SPEED_COS;
 
         //blackbox.matrix.turn_all_off();
     }
+    DPUpdate = 1;
 }
 void on_right() {
     if (MTMode == 0) {
         moveX += 1;
     }
     else {
-        R00 = R00 * 0.9962178865 - R02 * 0.086890291;
-        R02 = R00 * 0.086890291 + R02 * 0.9962178865;
+        R00 = R00 * ROT_SPEED_COS - R02 * ROT_SPEED_SIN;
+        R02 = R00 * ROT_SPEED_SIN + R02 * ROT_SPEED_COS;
 
-        R10 = R10 * 0.9962178865 - R12 * 0.086890291;
-        R12 = R10 * 0.086890291 + R12 * 0.9962178865;
+        R10 = R10 * ROT_SPEED_COS - R12 * ROT_SPEED_SIN;
+        R12 = R10 * ROT_SPEED_SIN + R12 * ROT_SPEED_COS;
 
-        R20 = R20 * 0.9962178865 - R22 * 0.086890291;
-        R22 = R20 * 0.086890291 + R22 * 0.9962178865;
+        R20 = R20 * ROT_SPEED_COS - R22 * ROT_SPEED_SIN;
+        R22 = R20 * ROT_SPEED_SIN + R22 * ROT_SPEED_COS;
 
         //blackbox.matrix.turn_all_off();
     }
+    DPUpdate = 1;
 }
 void on_select() {
     if (MTMode == 0) {
@@ -128,6 +136,7 @@ void on_select() {
     else {
         MTMode = 0;
     }
+    DPUpdate = 1;
 }
 
 // These functions are called repeatedly
@@ -333,7 +342,7 @@ int project(float p0, float p1, float p2) { // Project point
 }
 
 int scale(float num) {
-    float base = -SIMULATED_DISPLAY_SIZE/2;
+    float base = DISPLAY_MIN;
     float increment = SIMULATED_DISPLAY_SIZE/REAL_DISPLAY_SIZE;
     if (num < base) {
         return -1;
@@ -367,11 +376,10 @@ int scale(float num) {
 
 // DRAW //
 
-void draw() {
-    int xDraw = scale(xProjected);
-    int yDraw = scale(yProjected);
+void draw(float xProj, float yProj) {
+    int xDraw = scale(xProj);
+    int yDraw = scale(yProj);
 
-    blackbox.matrix.turn_all_off();
     if (xDraw != -1 && yDraw != -1) {
         blackbox.matrix.pixel_xy(xDraw, yDraw).turn_on();
     }
@@ -386,29 +394,61 @@ void main() {
     float p01 = 2.0;
     float p02 = 2.0;
 
+    float p0x;
+    float p0y;
+
     float p10 = 3.0; // Point 2
     float p11 = 2.0;
     float p12 = 2.0;
+
+    float p1x;
+    float p1y;
 
     float p20 = 0.0; // Point 3
     float p21 = -4.0;
     float p22 = 2.0;
 
+    float p2x;
+    float p2y;
     setCamera(0, 0, -2); // Maybe remove
 
     while (1) {
-        mtUpdate();
+        if (DPUpdate == 1) {
+				DPUpdate = 0;
+				mtUpdate();
 
-        if (project(p00, p01, p02)) { // Draw point 1
-            draw();
+				if (project(p00, p01, p02)) { // Draw point 1
+            p0x = xProjected;
+            p0y = yProjected;
+        }
+        else {
+            p0x = -1;
+            p0y = -1;
         }
         if (project(p10, p11, p12)) { // Draw point 2
-            draw();
+            p1x = xProjected;
+            p1y = yProjected;
+        }
+        else {
+            p1x = -1;
+            p1y = -1;
         }
         if (project(p20, p21, p22)) { // Draw point 3
-            draw();
+            p2x = xProjected;
+            p2y = yProjected;
+        }
+        else {
+            p2x = -1;
+            p2y = -1;
         }
 
-        //blackbox.sleep(5);
+    		blackbox.matrix.turn_all_off();
+
+      	draw(p0x, p0y);
+        draw(p1x, p1y);
+        draw(p2x, p2y);
+      }
+
+      	//blackbox.sleep(100);
     }
 }
