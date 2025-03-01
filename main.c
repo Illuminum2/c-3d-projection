@@ -46,16 +46,7 @@ float quat2 = 0.0;
 float quat3 = 0.0;
 
 // Identity matrix
-//float R[3][3] = {{1,0,0}, {0,1,0}, {0,0,1}};
-float R00 = 1;
-float R01 = 0;
-float R02 = 0;
-float R10 = 0;
-float R11 = 1;
-float R12 = 0;
-float R20 = 0;
-float R21 = 0;
-float R22 = 1;
+float R[3][3] = {{1,0,0}, {0,1,0}, {0,0,1}};
 
 float xProjected; // float xProjected, yProjected; does not work
 float yProjected;
@@ -98,14 +89,14 @@ void on_left() {
     }
     else {
         // Temporary rotation fix, simpler direct matrix rotation
-        R00 = R00 * ROT_SPEED_COS + R02 * ROT_SPEED_SIN;
-        R02 = -R00 * ROT_SPEED_SIN + R02 * ROT_SPEED_COS;
+        R[0][0] = R[0][0] * ROT_SPEED_COS + R[0][2] * ROT_SPEED_SIN;
+        R[0][2] = -R[0][0] * ROT_SPEED_SIN + R[0][2] * ROT_SPEED_COS;
 
-        R10 = R10 * ROT_SPEED_COS + R12 * ROT_SPEED_SIN;
-        R12 = -R10 * ROT_SPEED_SIN + R12 * ROT_SPEED_COS;
+        R[1][0] = R[1][0] * ROT_SPEED_COS + R[1][2] * ROT_SPEED_SIN;
+        R[1][2] = -R[1][0] * ROT_SPEED_SIN + R[1][2] * ROT_SPEED_COS;
 
-        R20 = R20 * ROT_SPEED_COS + R22 * ROT_SPEED_SIN;
-        R22 = -R20 * ROT_SPEED_SIN + R22 * ROT_SPEED_COS;
+        R[2][0] = R[2][0] * ROT_SPEED_COS + R[2][2] * ROT_SPEED_SIN;
+        R[2][2] = -R[2][0] * ROT_SPEED_SIN + R[2][2] * ROT_SPEED_COS;
 
         //blackbox.matrix.turn_all_off();
     }
@@ -116,14 +107,14 @@ void on_right() {
         moveX += 1;
     }
     else {
-        R00 = R00 * ROT_SPEED_COS - R02 * ROT_SPEED_SIN;
-        R02 = R00 * ROT_SPEED_SIN + R02 * ROT_SPEED_COS;
+        R[0][0] = R[0][0] * ROT_SPEED_COS - R[0][2] * ROT_SPEED_SIN;
+        R[0][2] = R[0][0] * ROT_SPEED_SIN + R[0][2] * ROT_SPEED_COS;
 
-        R10 = R10 * ROT_SPEED_COS - R12 * ROT_SPEED_SIN;
-        R12 = R10 * ROT_SPEED_SIN + R12 * ROT_SPEED_COS;
+        R[1][0] = R[1][0] * ROT_SPEED_COS - R[1][2] * ROT_SPEED_SIN;
+        R[1][2] = R[1][0] * ROT_SPEED_SIN + R[1][2] * ROT_SPEED_COS;
 
-        R20 = R20 * ROT_SPEED_COS - R22 * ROT_SPEED_SIN;
-        R22 = R20 * ROT_SPEED_SIN + R22 * ROT_SPEED_COS;
+        R[2][0] = R[2][0] * ROT_SPEED_COS - R[2][2] * ROT_SPEED_SIN;
+        R[2][2] = R[2][0] * ROT_SPEED_SIN + R[2][2] * ROT_SPEED_COS;
 
         //blackbox.matrix.turn_all_off();
     }
@@ -251,9 +242,9 @@ void setCamera(float xNew, float yNew, float zNew) {
 }
 
 void moveCamera(float m0, float m1, float m2) {
-    x += (R00 * SPEED * m0) + (R01 * SPEED * m1) + (R02 * SPEED * m2);
-    y += (R10 * SPEED * m0) + (R11 * SPEED * m1) + (R12 * SPEED * m2);
-    z += (R20 * SPEED * m0) + (R21 * SPEED * m1) + (R22 * SPEED * m2);
+    x += (R[0][0] * SPEED * m0) + (R[0][1] * SPEED * m1) + (R[0][2] * SPEED * m2);
+    y += (R[1][0] * SPEED * m0) + (R[1][1] * SPEED * m1) + (R[1][2] * SPEED * m2);
+    z += (R[2][0] * SPEED * m0) + (R[2][1] * SPEED * m1) + (R[2][2] * SPEED * m2);
 }
 
 void rotateCamera(float deltaAngleDegrees, float a0, float a1, float a2) {
@@ -273,17 +264,17 @@ void updateR() {
     float y1 = quat2;
     float z1 = quat3;
 
-    R00 = 1 - 2 * y1 * y1 - 2 * z1 * z1;
-    R01 = 2 * x1 * y1 - 2 * z1 * w1;
-    R02 = 2 * x1 * z1 + 2 * y1 * w1;
+    R[0][0] = 1 - 2 * y1 * y1 - 2 * z1 * z1;
+    R[0][1] = 2 * x1 * y1 - 2 * z1 * w1;
+    R[0][2] = 2 * x1 * z1 + 2 * y1 * w1;
 
-    R10 = 2 * x1 * y1 + 2 * z1 * w1;
-    R11 = 1 - 2 * x1 * x1 - 2 * z1 * z1;
-    R12 = 2 * y1 * z1 - 2 * x1 * w1;
+    R[1][0] = 2 * x1 * y1 + 2 * z1 * w1;
+    R[1][1] = 1 - 2 * x1 * x1 - 2 * z1 * z1;
+    R[1][2] = 2 * y1 * z1 - 2 * x1 * w1;
 
-    R20 = 2 * x1 * z1 - 2 * y1 * w1;
-    R21 = 2 * y1 * z1 + 2 * x1 * w1;
-    R22 = 1 - 2 * x1 * x1 - 2 * y1 * y1;
+    R[2][0] = 2 * x1 * z1 - 2 * y1 * w1;
+    R[2][1] = 2 * y1 * z1 + 2 * x1 * w1;
+    R[2][2] = 1 - 2 * x1 * x1 - 2 * y1 * y1;
 }
 
 // MOVEMENT/TURN UPDATE //
@@ -329,9 +320,9 @@ int project(float p0, float p1, float p2) { // Project point
     float P1y = p1 - y;
     float P1z = p2 - z;
 
-    float P2x = (R00 * P1x) + (R10 * P1y) + (R20 * P1z); // Hardcoded R_inv
-    float P2y = (R01 * P1x) + (R11 * P1y) + (R21 * P1z);
-    float P2z = (R02 * P1x) + (R12 * P1y) + (R22 * P1z);
+    float P2x = (R[0][0] * P1x) + (R[1][0] * P1y) + (R[2][0] * P1z); // Hardcoded R_inv
+    float P2y = (R[0][1] * P1x) + (R[1][1] * P1y) + (R[2][1] * P1z);
+    float P2z = (R[0][2] * P1x) + (R[1][2] * P1y) + (R[2][2] * P1z);
 
     if (P2z > 0) {
         xProjected = FOCAL_LENGTH * P2x / P2z;
