@@ -30,8 +30,8 @@ const int REAL_DISPLAY_SIZE = 8;
 const int DISPLAY_MIN = -SIMULATED_DISPLAY_SIZE/2;
 
 const float SPEED = 0.1*20;
-const float ROT_SPEED_SIN = 0.2588190451; // sin of 0.087 rad(~5 degrees)
-const float ROT_SPEED_COS = 0.9659258263; // cos of 0.087 rad(~5 degrees)
+const float ROT_SPEED_SIN = 0.1736481777; // sin of 10 degrees
+const float ROT_SPEED_COS = 0.984807753; // cos of ~10 degrees
 
 const float PI = 3.1415926535;
 const int TERMS = 7;
