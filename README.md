@@ -13,8 +13,9 @@ _**Notes**: Currently using direct rotation matrix manipulation as a temporary f
 
 ## Difficulties
 
-These are a few of the technical difficulties I faced while working on this project. The things mentioned here are not supported by the Blackbox editor:
+These are a few of the technical difficulties I faced while working on this project. These features were not supported by the Blackbox editor at the time I wrote my code:
 
+- **No console for debugging**:
 - **No external libraries**: External libraries are **NOT** allowed, this project was made without:
 - - `math.h`: sin(), cos(), pow(), sqrt()
 - - `stdlib.h`: malloc(), realloc(), calloc(), free()
